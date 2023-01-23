@@ -1,6 +1,5 @@
 import collections as col
 def DFS(src,dest,graph,visited):
-    result=[]
     if src not in visited:
         visited.append(src)
     if src==dest:
