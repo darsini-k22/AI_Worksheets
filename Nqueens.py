@@ -1,45 +1,90 @@
-import heapq
+from queue import Queue
 
-def n_queens(n):
-    def heuristic(board):
-        # Count the number of queens that are attacking each other
-        queens = [(i, j) for i, val in enumerate(board) for j, is_queen in enumerate(val) if is_queen]
-        return sum(1 for i, j in queens for x, y in queens if i != x and j != y and abs(i - x) == abs(j - y))
 
-    def generate_board(queens):
-        # Generate a board with the specified queens placed on it
-        board = [[0] * n for _ in range(n)]
-        for x, y in queens:
-            board[x][y] = 1
-        return board
+class NQueens:
 
-    def generate_neighbors(board):
-        # Generate all boards that can be reached by moving a single queen
-        queens = [(i, j) for i, val in enumerate(board) for j, is_queen in enumerate(val) if is_queen]
-        for x, y in queens:
-            for i in range(n):
-                if i != x:
-                    new_queens = [(i, y) if (i, j) == (x, y) else (i, j) for i, j in queens]
-                    yield generate_board(new_queens)
+    def __init__(self, size):
+        self.size = size
 
-    start = generate_board([(0, i) for i in range(n)])
-    heap = [(heuristic(start), start)]
-    visited = set()
+    def solve_dfs(self):
+        if self.size < 1:
+            return []
+        solutions = []
+        stack = [[]]
+        while stack:
+            solution = stack.pop()
+            if self.conflict(solution):
+                continue
+            row = len(solution)
+            if row == self.size:
+                solutions.append(solution)
+                continue
+            for col in range(self.size):
+                queen = (row, col)
+                queens = solution.copy()
+                queens.append(queen)
+                stack.append(queens)
+        return solutions
 
-    while heap:
-        _, current = heapq.heappop(heap)
-        if heuristic(current) == 0:
-            return current
-        for neighbor in generate_neighbors(current):
-            if neighbor not in visited:
-                visited.add(neighbor)
-                heapq.heappush(heap, (heuristic(neighbor), neighbor))
+    def solve_bfs(self):
+        if self.size < 1:
+            return []
+        solutions = []
+        queue = Queue()
+        queue.put([])
+        while not queue.empty():
+            solution = queue.get()
+            if self.conflict(solution):
+                continue
+            row = len(solution)
+            if row == self.size:
+                solutions.append(solution)
+                continue
+            for col in range(self.size):
+                queen = (row, col)
+                queens = solution.copy()
+                queens.append(queen)
+                queue.put(queens)
+        return solutions
 
-    return None
+    def conflict(self, queens):
+        for i in range(1, len(queens)):
+            for j in range(0, i):
+                a, b = queens[i]
+                c, d = queens[j]
+                if a == c or b == d or abs(a - c) == abs(b - d):
+                    return True
+        return False
 
-result = n_queens(8)
-for row in result:
-    for val in row:
-        print(val, end=" ")
-    print()
+    def print(self, queens):
+        for i in range(self.size):
+            print(' ---' * self.size)
+            for j in range(self.size):
+                p = 'Q' if (i, j) in queens else ' '
+                print('| %s ' % p, end='')
+            print('|')
+        print(' ---' * self.size)
 
+from n_queens import NQueens
+
+
+def main():
+    print('.: N-Queens Problem :.')
+    size = int(input('Please enter the size of board: '))
+    print_solutions = input('Do you want the solutions to be printed (Y/N): ').lower() == 'y'
+    n_queens = NQueens(size)
+    dfs_solutions = n_queens.solve_dfs()
+    bfs_solutions = n_queens.solve_bfs()
+    if print_solutions:
+        for i, solution in enumerate(dfs_solutions):
+            print('DFS Solution %d:' % (i + 1))
+            n_queens.print(solution)
+        for i, solution in enumerate(bfs_solutions):
+            print('BFS Solution %d:' % (i + 1))
+            n_queens.print(solution)
+    print('Total DFS solutions: %d' % len(dfs_solutions))
+    print('Total BFS solutions: %d' % len(bfs_solutions))
+
+
+if __name__ == '__main__':
+    main()
