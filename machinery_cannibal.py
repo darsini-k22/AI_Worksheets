@@ -1,95 +1,60 @@
-#Python program to illustrate Missionaries & cannibals Problem
-#This code is contributed by Sunit Mal
-print("\n")
-print("\tGame Start\nNow the task is to move all of them to right side of the river")
-print("rules:\n1. The boat can carry at most two people\n2. If cannibals num greater than missionaries then the cannibals would eat the missionaries\n3. The boat cannot cross the river by itself with no people on board")
-lM = 3		 #lM = Left side Missionaries number
-lC = 3		 #lC = Laft side Cannibals number
-rM=0		 #rM = Right side Missionaries number
-rC=0		 #rC = Right side cannibals number
-userM = 0	 #userM = User input for number of missionaries for right to left side travel
-userC = 0	 #userC = User input for number of cannibals for right to left travel
-k = 0
-print("\nM M M C C C |	 --- | \n")
-try:
-	while(True):
-		while(True):
-			print("Left side -> right side river travel")
-			#uM = user input for number of missionaries for left to right travel
-			#uC = user input for number of cannibals for left to right travel
-			uM = int(input("Enter number of Missionaries travel => "))	
-			uC = int(input("Enter number of Cannibals travel => "))
+import heapq
 
-			if((uM==0)and(uC==0)):
-				print("Empty travel not possible")
-				print("Re-enter : ")
-			elif(((uM+uC) <= 2)and((lM-uM)>=0)and((lC-uC)>=0)):
-				break
-			else:
-				print("Wrong input re-enter : ")
-		lM = (lM-uM)
-		lC = (lC-uC)
-		rM += uM
-		rC += uC
+class State:
+    def __init__(self, missionaries, cannibals, boat, cost, parent):
+        self.missionaries = missionaries
+        self.cannibals = cannibals
+        self.boat = boat
+        self.cost = cost
+        self.parent = parent
 
-		print("\n")
-		for i in range(0,lM):
-			print("M ",end="")
-		for i in range(0,lC):
-			print("C ",end="")
-		print("| --> | ",end="")
-		for i in range(0,rM):
-			print("M ",end="")
-		for i in range(0,rC):
-			print("C ",end="")
-		print("\n")
+    def is_goal(self):
+        return self.missionaries == 0 and self.cannibals == 0
 
-		k +=1
+    def is_valid(self):
+        if self.missionaries < 0 or self.missionaries > 3:
+            return False
+        if self.cannibals < 0 or self.cannibals > 3:
+            return False
+        if self.missionaries < self.cannibals and self.missionaries > 0:
+            return False
+        if (3 - self.missionaries) < (3 - self.cannibals) and (3 - self.missionaries) > 0:
+            return False
+        return True
 
-		if(((lC==3)and (lM == 1))or((lC==3)and(lM==2))or((lC==2)and(lM==1))or((rC==3)and (rM == 1))or((rC==3)and(rM==2))or((rC==2)and(rM==1))):
-			print("Cannibals eat missionaries:\nYou lost the game")
+    def __lt__(self, other):
+        return self.cost < other.cost
 
-			break
+def astar(start, goal):
+    heap = []
+    heapq.heappush(heap, start)
+    while heap:
+        current = heapq.heappop(heap)
+        if current.is_goal():
+            return current
+        moves = [(1, 0), (2, 0), (0, 1), (0, 2), (1, 1)]
+        for move in moves:
+            if current.boat == 1:
+                next_state = State(current.missionaries - move[0], current.cannibals - move[1], 0, current.cost + 1, current)
+                if next_state.is_valid():
+                    heapq.heappush(heap, next_state)
+            else:
+                next_state = State(current.missionaries + move[0], current.cannibals + move[1], 1, current.cost + 1, current)
+                if next_state.is_valid():
+                    heapq.heappush(heap, next_state)
+    return None
 
-		if((rM+rC) == 6):
-			print("You won the game : \n\tCongrats")
-			print("Total attempt")
-			print(k)
-			break
-		while(True):
-			print("Right side -> Left side river travel")
-			userM = int(input("Enter number of Missionaries travel => "))
-			userC = int(input("Enter number of Cannibals travel => "))
-			
-			if((userM==0)and(userC==0)):
-					print("Empty travel not possible")
-					print("Re-enter : ")
-			elif(((userM+userC) <= 2)and((rM-userM)>=0)and((rC-userC)>=0)):
-				break
-			else:
-				print("Wrong input re-enter : ")
-		lM += userM
-		lC += userC
-		rM -= userM
-		rC -= userC
+start = State(3, 3, 1, 0, None)
+goal = State(0, 0, 0, 0, None)
+result = astar(start, goal)
+if result is None:
+    print("No solution found")
+else:
+    path = []
+    while result:
+        path.append(result)
+        result = result.parent
+    for i in range(len(path) - 1, -1, -1):
+        state = path[i]
+        print("Step {}: Missionaries = {}, Cannibals = {}, Boat = {}".format(len(path) - i - 1, state.missionaries, state.cannibals, state.boat))
 
-		k +=1
-		print("\n")
-		for i in range(0,lM):
-			print("M ",end="")
-		for i in range(0,lC):
-			print("C ",end="")
-		print("| <-- | ",end="")
-		for i in range(0,rM):
-			print("M ",end="")
-		for i in range(0,rC):
-			print("C ",end="")
-		print("\n")
-
-	
-
-		if(((lC==3)and (lM == 1))or((lC==3)and(lM==2))or((lC==2)and(lM==1))or((rC==3)and (rM == 1))or((rC==3)and(rM==2))or((rC==2)and(rM==1))):
-			print("Cannibals eat missionaries:\nYou lost the game")
-			break
-except EOFError as e:
-	print("\nInvalid input please retry !!")
